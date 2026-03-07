@@ -1,0 +1,162 @@
+<!-- frontend/tasks.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TaskFlow — Tasks</title>
+    <link rel="stylesheet" href="css/styles.css" />
+</head>
+
+<body>
+
+    <!-- ======================================================
+         NAV
+    ====================================================== -->
+    <nav class="nav">
+        <div class="nav__brand">
+            <span class="nav__logo">⚡</span>
+            <span class="nav__name">TaskFlow</span>
+        </div>
+        <ul class="nav__links">
+            <li><a href="index.html" class="nav__link">Dashboard</a></li>
+            <li><a href="tasks.html" class="nav__link nav__link--active">Tasks</a></li>
+        </ul>
+    </nav>
+
+    <!-- ======================================================
+         MAIN
+    ====================================================== -->
+    <main class="main">
+
+        <header class="page-header">
+            <h1 class="page-header__title">Task Manager</h1>
+            <p class="page-header__sub">Create, update, and manage your tasks</p>
+        </header>
+
+        <div class="layout">
+
+            <!-- ============================================
+                 LEFT — Task Form
+            ============================================ -->
+            <aside class="sidebar">
+
+                <div class="card">
+                    <h2 id="form-title" class="card__title">Create Task</h2>
+
+                    <div id="form-errors" class="form-errors"></div>
+
+                    <form id="task-form" class="form" novalidate>
+
+                        <div class="form__group">
+                            <label class="form__label" for="title">
+                                Title <span class="required">*</span>
+                            </label>
+                            <input id="title" type="text" class="form__input" placeholder="Enter task title"
+                                maxlength="150" required />
+                        </div>
+
+                        <div class="form__group">
+                            <label class="form__label" for="description">
+                                Description
+                            </label>
+                            <textarea id="description" class="form__input form__textarea"
+                                placeholder="Optional details..." rows="3"></textarea>
+                        </div>
+
+                        <div class="form__row">
+                            <div class="form__group">
+                                <label class="form__label" for="status">Status</label>
+                                <select id="status" class="form__input form__select">
+                                    <option value="pending">Pending</option>
+                                    <option value="in_progress">In Progress</option>
+                                    <option value="completed">Completed</option>
+                                </select>
+                            </div>
+
+                            <div class="form__group">
+                                <label class="form__label" for="priority">Priority</label>
+                                <select id="priority" class="form__input form__select">
+                                    <option value="low">Low</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form__group">
+                            <label class="form__label" for="due_date">Due Date</label>
+                            <input id="due_date" type="date" class="form__input" />
+                        </div>
+
+                        <div class="form__actions">
+                            <button id="submit-btn" type="submit" class="btn btn--primary">
+                                Create Task
+                            </button>
+                            <button id="reset-btn" type="button" class="btn btn--ghost">
+                                Cancel
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+
+            </aside>
+
+            <!-- ============================================
+                 RIGHT — Task List
+            ============================================ -->
+            <section class="content">
+
+                <!-- Toolbar -->
+                <div class="toolbar">
+
+                    <div class="toolbar__search">
+                        <input id="search" type="text" class="form__input" placeholder="Search tasks..." />
+                    </div>
+
+                    <div class="toolbar__filters">
+
+                        <select id="filter-status" class="form__input form__select">
+                            <option value="">All Statuses</option>
+                            <option value="pending">Pending</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                        </select>
+
+                        <select id="filter-priority" class="form__input form__select">
+                            <option value="">All Priorities</option>
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                        </select>
+
+                        <select id="filter-sort" class="form__input form__select">
+                            <option value="created_at_desc">Newest First</option>
+                            <option value="created_at_asc">Oldest First</option>
+                            <option value="due_date_asc">Due Date</option>
+                            <option value="priority_desc">Priority</option>
+                        </select>
+
+                    </div>
+                </div>
+
+                <!-- Task Cards — filled by tasks.js -->
+                <div id="task-list" class="task-list">
+                    <p class="loading">Loading tasks...</p>
+                </div>
+
+                <!-- Pagination — filled by tasks.js -->
+                <div id="pagination"></div>
+
+            </section>
+
+        </div>
+    </main>
+
+    <script type="module" src="js/main.js"></script>
+    <script type="module" src="js/tasks.js"></script>
+</body>
+
+</html>

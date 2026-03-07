@@ -1,0 +1,65 @@
+<!-- frontend/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TaskFlow — Dashboard</title>
+    <link rel="stylesheet" href="css/styles.css" />
+</head>
+
+<body>
+
+    <!-- ======================================================
+         NAV
+    ====================================================== -->
+    <nav class="nav">
+        <div class="nav__brand">
+            <span class="nav__logo">⚡</span>
+            <span class="nav__name">TaskFlow</span>
+        </div>
+        <ul class="nav__links">
+            <li><a href="index.html" class="nav__link nav__link--active">Dashboard</a></li>
+            <li><a href="tasks.html" class="nav__link">Tasks</a></li>
+        </ul>
+    </nav>
+
+    <!-- ======================================================
+         MAIN
+    ====================================================== -->
+    <main class="main">
+
+        <header class="page-header">
+            <h1 class="page-header__title">Dashboard</h1>
+            <p class="page-header__sub">Overview of all tasks and activity</p>
+        </header>
+
+        <!-- STAT CARDS — filled by dashboard.js -->
+        <section id="stats-container" class="stats-grid">
+            <div class="stat-card skeleton"></div>
+            <div class="stat-card skeleton"></div>
+            <div class="stat-card skeleton"></div>
+            <div class="stat-card skeleton"></div>
+            <div class="stat-card skeleton"></div>
+            <div class="stat-card skeleton"></div>
+        </section>
+
+        <!-- RECENT TASKS -->
+        <section class="section">
+            <div class="section__header">
+                <h2 class="section__title">Recent Tasks</h2>
+                <a href="tasks.html" class="btn btn--secondary">View All</a>
+            </div>
+            <div id="recent-tasks" class="recent-list">
+                <p class="loading">Loading...</p>
+            </div>
+        </section>
+
+    </main>
+
+    <script type="module" src="js/main.js"></script>
+    <script type="module" src="js/dashboard.js"></script>
+</body>
+
+</html>
