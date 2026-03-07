@@ -1,0 +1,126 @@
+fullstack-js-fastapi-postgres/
+│
+├── .gitignore
+│   # Defines files and directories Git should ignore (venv, env files, logs, etc.)
+│
+├── README.md
+│   # Main project documentation: overview, features, setup instructions, architecture
+│
+├── docker-compose.yml
+│   # Defines Docker services (PostgreSQL database and optional backend container)
+│
+├── backend/
+│   # FastAPI backend application responsible for business logic and API endpoints
+│
+│   ├── requirements.txt
+│   │   # Python dependencies for the backend (FastAPI, SQLAlchemy, psycopg2, etc.)
+│   │
+│   ├── .env.example
+│   │   # Example environment variables configuration (database URL, settings)
+│   │
+│   └── app/
+│       # Core FastAPI application source code
+│
+│       ├── __init__.py
+│       │   # Marks this directory as a Python package
+│       │
+│       ├── main.py
+│       │   # FastAPI application entry point; registers routes and middleware
+│       │
+│       ├── db.py
+│       │   # Database connection configuration and session management
+│       │
+│       ├── models.py
+│       │   # SQLAlchemy ORM models representing database tables
+│       │
+│       ├── schemas.py
+│       │   # Pydantic models used for request validation and API responses
+│       │
+│       ├── crud.py
+│       │   # Database operations (create, read, update, delete) for tasks
+│       │
+│       ├── routes/
+│       │   # API route modules grouped by domain
+│       │
+│       │   ├── __init__.py
+│       │   │   # Initializes routes package
+│       │   │
+│       │   └── tasks.py
+│       │       # REST API endpoints for task management (CRUD and statistics)
+│       │
+│       └── utils/
+│           # Utility functions used across backend modules
+│
+│           ├── __init__.py
+│           │   # Initializes utilities package
+│           │
+│           └── helpers.py
+│               # Shared helper functions (validation, formatting, etc.)
+│
+├── database/
+│   # SQL scripts for schema definition, queries, procedures, and seed data
+│
+│   ├── schema.sql
+│   │   # Database schema (tables, constraints, indexes)
+│   │
+│   ├── seed.sql
+│   │   # Initial dataset used for development and testing
+│   │
+│   ├── queries.sql
+│   │   # Example SQL queries demonstrating filtering, aggregation, and reporting
+│   │
+│   └── procedures.sql
+│       # PostgreSQL stored procedures/functions used for advanced operations
+│
+├── frontend/
+│   # Client-side application built with vanilla JavaScript (ES6+)
+│
+│   ├── index.html
+│   │   # Landing/home page of the application
+│   │
+│   ├── tasks.html
+│   │   # Task management interface (create, update, delete, filter tasks)
+│   │
+│   ├── dashboard.html
+│   │   # Dashboard displaying aggregated task statistics and summaries
+│   │
+│   ├── css/
+│   │
+│   │   └── styles.css
+│   │       # Global stylesheet for layout, forms, cards, and UI components
+│   │
+│   └── js/
+│       # Modular JavaScript code using ES6 modules
+│
+│       ├── main.js
+│       │   # Entry point for shared frontend initialization logic
+│       │
+│       ├── api.js
+│       │   # Centralized API client for communicating with backend endpoints
+│       │
+│       ├── tasks.js
+│       │   # Task page logic: loading tasks, form handling, CRUD interactions
+│       │
+│       ├── dashboard.js
+│       │   # Dashboard logic for retrieving and rendering statistics
+│       │
+│       ├── ui.js
+│       │   # UI rendering utilities for building task cards and components
+│       │
+│       └── utils.js
+│           # General frontend helper functions (formatting, validation, helpers)
+│
+├── docker/
+│   # Docker-related configuration files for containerized environments
+│
+└── docs/
+    # Project documentation explaining architecture and setup
+    │
+    ├── architecture.md
+    │   # System architecture overview and component interaction
+    │
+    ├── setup.md
+    │   # Instructions for running the project locally (database, backend, frontend)
+    │
+    └── api.md
+        # API documentation describing endpoints, parameters, and responses
