@@ -1,62 +1,117 @@
 // frontend/js/tasks.js
 
-import { TaskAPI }                              from './api.js';
-import { renderTaskList, renderPagination,
-         renderFormErrors }                     from './ui.js';
-import { validateTaskForm, getElement,
-         clearElement }                         from './utils.js';
+import { TaskAPI }                   from './api.js';
+import { renderTaskList,
+         renderPagination,
+         renderFormErrors }          from './ui.js';
+import { validateTaskForm,
+         getElement,
+         clearElement }              from './utils.js';
 
 // ============================================================
-// Page State — single source of truth
+// Page State — single source of truth for all query params
 // ============================================================
 const state = {
-    page:     1,
-    limit:    10,
-    status:   '',
-    priority: '',
-    search:   '',
-    sort:     'created_at_desc',
-    editingId: null,   // null = create mode, number = edit mode
+    page:      1,
+    limit:     10,
+    status:    '',
+    priority:  '',
+    search:    '',
+    sort:      'created_at_desc',
+    editingId: null,
 };
 
 // ============================================================
-// Load and render tasks with current state
-// async/await, spread
+// loadTasks()
+// Reads state, calls API, renders results + pagination
 // ============================================================
-const loadTasks = async () => {
-    const container   = getElement('#task-list');
-    const pagination  = getElement('#pagination');
+export const loadTasks = async () => {
+    const listEl  = getElement('#task-list');
+    const pageEl  = getElement('#pagination');
+
+    listEl.innerHTML = '<p class="loading">Loading tasks...</p>';
 
     try {
-        // Spread state into filters object
-        const data = await TaskAPI.getAll({ ...state });
+        const data = await TaskAPI.getAll({
+            page:     state.page,
+            limit:    state.limit,
+            status:   state.status,
+            priority: state.priority,
+            search:   state.search,
+            sort:     state.sort,
+        });
 
-        renderTaskList(data.tasks, container);
+        // data = { tasks: [...], total: 12, page: 1, total_pages: 2 }
+        renderTaskList(data.tasks, listEl);
+
         renderPagination(
-            { page: state.page, total_pages: data.total_pages },
-            pagination,
+            {
+                page:        data.page,
+                total_pages: data.total_pages,
+            },
+            pageEl,
             (newPage) => {
                 state.page = newPage;
                 loadTasks();
             }
         );
+
     } catch (err) {
-        container.innerHTML = `<p class="error">Failed to load tasks: ${err.message}</p>`;
+        listEl.innerHTML = `<p class="error">Failed to load tasks: ${err.message}</p>`;
     }
 };
 
 // ============================================================
-// Handle form submit — create or update
-// async/await, destructuring
+// createTask()
+// Reads form, validates, posts to API
+// ============================================================
+const createTask = async (taskData) => {
+    await TaskAPI.create(taskData);
+};
+
+// ============================================================
+// updateTask()
+// Sends updated fields to API for existing task
+// ============================================================
+const updateTask = async (id, taskData) => {
+    await TaskAPI.update(id, taskData);
+};
+
+// ============================================================
+// deleteTask()
+// Confirms with user then deletes by ID
+// ============================================================
+export const deleteTask = async (id) => {
+    const confirmed = window.confirm('Delete this task? This cannot be undone.');
+    if (!confirmed) return;
+
+    try {
+        await TaskAPI.delete(id);
+        await loadTasks();
+    } catch (err) {
+        console.error('Delete failed:', err.message);
+    }
+};
+
+// ============================================================
+// filterTasks()
+// Updates state from a filter object and reloads
+// ============================================================
+export const filterTasks = (filters = {}) => {
+    // Spread filters into state, always reset to page 1
+    Object.assign(state, { ...filters, page: 1 });
+    loadTasks();
+};
+
+// ============================================================
+// Handle Form Submit — create or update
 // ============================================================
 const handleFormSubmit = async (e) => {
     e.preventDefault();
 
-    const form        = e.target;
-    const errorBox    = getElement('#form-errors');
+    const errorBox = getElement('#form-errors');
     clearElement(errorBox);
 
-    // Destructure form values
     const taskData = {
         title:       getElement('#title').value.trim(),
         description: getElement('#description').value.trim(),
@@ -65,8 +120,8 @@ const handleFormSubmit = async (e) => {
         due_date:    getElement('#due_date').value || null,
     };
 
-    // Validate before sending
     const { valid, errors } = validateTaskForm(taskData);
+
     if (!valid) {
         renderFormErrors(errors, errorBox);
         return;
@@ -74,9 +129,9 @@ const handleFormSubmit = async (e) => {
 
     try {
         if (state.editingId) {
-            await TaskAPI.update(state.editingId, taskData);
+            await updateTask(state.editingId, taskData);
         } else {
-            await TaskAPI.create(taskData);
+            await createTask(taskData);
         }
 
         resetForm();
@@ -88,20 +143,11 @@ const handleFormSubmit = async (e) => {
 };
 
 // ============================================================
-// Handle edit button click — populate form
-// async/await, destructuring
+// Handle Edit Button — populate form with task data
 // ============================================================
 const handleEdit = async (id) => {
     try {
-        const task = await TaskAPI.getById(id);
-
-        const {
-            title,
-            description,
-            status,
-            priority,
-            due_date,
-        } = task;  // destructuring
+        const { title, description, status, priority, due_date } = await TaskAPI.getById(id);
 
         getElement('#title').value       = title;
         getElement('#description').value = description ?? '';
@@ -110,32 +156,18 @@ const handleEdit = async (id) => {
         getElement('#due_date').value    = due_date ?? '';
 
         state.editingId = id;
-        getElement('#form-title').textContent  = 'Edit Task';
-        getElement('#submit-btn').textContent  = 'Update Task';
+
+        getElement('#form-title').textContent = 'Edit Task';
+        getElement('#submit-btn').textContent = 'Update Task';
+        getElement('#task-form').scrollIntoView({ behavior: 'smooth' });
 
     } catch (err) {
-        console.error('Failed to load task for editing:', err);
+        console.error('Failed to load task for editing:', err.message);
     }
 };
 
 // ============================================================
-// Handle delete button click
-// async/await
-// ============================================================
-const handleDelete = async (id) => {
-    const confirmed = window.confirm('Are you sure you want to delete this task?');
-    if (!confirmed) return;
-
-    try {
-        await TaskAPI.delete(id);
-        await loadTasks();
-    } catch (err) {
-        console.error('Failed to delete task:', err);
-    }
-};
-
-// ============================================================
-// Reset form to create mode
+// Reset form back to create mode
 // ============================================================
 const resetForm = () => {
     getElement('#task-form').reset();
@@ -146,67 +178,66 @@ const resetForm = () => {
 };
 
 // ============================================================
-// Wire up filter and search controls
-// Arrow functions, event listeners
+// Search — debounced input handler
+// Waits 400ms after user stops typing before firing
 // ============================================================
-const initFilters = () => {
-    const filterStatus   = getElement('#filter-status');
-    const filterPriority = getElement('#filter-priority');
-    const filterSort     = getElement('#filter-sort');
-    const searchInput    = getElement('#search');
+const initSearch = () => {
+    const input = getElement('#search');
+    if (!input) return;
 
-    filterStatus?.addEventListener('change', (e) => {
-        state.status = e.target.value;
-        state.page   = 1;
-        loadTasks();
-    });
-
-    filterPriority?.addEventListener('change', (e) => {
-        state.priority = e.target.value;
-        state.page     = 1;
-        loadTasks();
-    });
-
-    filterSort?.addEventListener('change', (e) => {
-        state.sort = e.target.value;
-        state.page = 1;
-        loadTasks();
-    });
-
-    // Debounced search — avoids API call on every keystroke
-    let searchTimer;
-    searchInput?.addEventListener('input', (e) => {
-        clearTimeout(searchTimer);
-        searchTimer = setTimeout(() => {
-            state.search = e.target.value.trim();
-            state.page   = 1;
-            loadTasks();
+    let timer;
+    input.addEventListener('input', (e) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+            filterTasks({ search: e.target.value.trim() });
         }, 400);
     });
 };
 
 // ============================================================
-// Event delegation — handle edit and delete from task list
+// Filters — status, priority, sort dropdowns
 // ============================================================
-const initTaskListEvents = () => {
-    const container = getElement('#task-list');
+const initFilters = () => {
+    getElement('#filter-status')?.addEventListener('change', (e) => {
+        filterTasks({ status: e.target.value });
+    });
 
-    container?.addEventListener('click', (e) => {
-        const editBtn   = e.target.closest('.btn--edit');
-        const deleteBtn = e.target.closest('.btn--delete');
+    getElement('#filter-priority')?.addEventListener('change', (e) => {
+        filterTasks({ priority: e.target.value });
+    });
 
-        if (editBtn)   handleEdit(parseInt(editBtn.dataset.id));
-        if (deleteBtn) handleDelete(parseInt(deleteBtn.dataset.id));
+    // Sorting — maps dropdown value to API sort param
+    // Supported: created_at_desc, created_at_asc, due_date_asc, priority_desc
+    getElement('#filter-sort')?.addEventListener('change', (e) => {
+        filterTasks({ sort: e.target.value });
     });
 };
 
 // ============================================================
-// Page init — runs on DOMContentLoaded
+// Event Delegation — edit and delete buttons on task cards
+// One listener handles all dynamically rendered cards
+// ============================================================
+const initTaskListEvents = () => {
+    const container = getElement('#task-list');
+    if (!container) return;
+
+    container.addEventListener('click', (e) => {
+        const editBtn   = e.target.closest('.btn--edit');
+        const deleteBtn = e.target.closest('.btn--delete');
+
+        if (editBtn)   handleEdit(parseInt(editBtn.dataset.id));
+        if (deleteBtn) deleteTask(parseInt(deleteBtn.dataset.id));
+    });
+};
+
+// ============================================================
+// Init — runs on DOMContentLoaded
 // ============================================================
 const init = () => {
     getElement('#task-form')?.addEventListener('submit', handleFormSubmit);
     getElement('#reset-btn')?.addEventListener('click',  resetForm);
 
+    initSearch();
     initFilters();
     initTaskListEvents();
     loadTasks();

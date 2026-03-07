@@ -1,52 +1,73 @@
 // frontend/js/dashboard.js
 
-import { TaskAPI }       from './api.js';
-import { renderStats }   from './ui.js';
-import { getElement }    from './utils.js';
+import { TaskAPI }     from './api.js';
+import { renderStats } from './ui.js';
+import { getElement }  from './utils.js';
 
 // ============================================================
-// Load and render dashboard statistics
-// async/await, destructuring
+// loadDashboardStats()
+// Fetches aggregated stats from GET /api/tasks/stats
+// Returns: total, pending, in_progress, completed,
+//          high_priority, overdue
 // ============================================================
-const loadStats = async () => {
+const loadDashboardStats = async () => {
     const container = getElement('#stats-container');
 
     try {
         const stats = await TaskAPI.getStats();
+
+        // renderStats destructures this object — see ui.js
         renderStats(stats, container);
+
     } catch (err) {
-        container.innerHTML = `<p class="error">Failed to load stats: ${err.message}</p>`;
+        container.innerHTML = `
+            <p class="error">Failed to load statistics: ${err.message}</p>
+        `;
     }
 };
 
 // ============================================================
-// Load recent tasks for dashboard preview
-// async/await, spread
+// loadRecentTasks()
+// Fetches 5 most recent tasks for dashboard preview list
 // ============================================================
 const loadRecentTasks = async () => {
     const container = getElement('#recent-tasks');
 
     try {
-        // Spread filters — only get 5 most recent
-        const data = await TaskAPI.getAll({ limit: 5, sort: 'created_at_desc' });
+        const data = await TaskAPI.getAll({
+            limit: 5,
+            sort:  'created_at_desc',
+        });
 
-        const { tasks } = data;  // destructuring
+        const { tasks } = data;
 
-        if (tasks.length === 0) {
-            container.innerHTML = '<p>No tasks yet.</p>';
+        if (!tasks || tasks.length === 0) {
+            container.innerHTML = '<p class="loading">No tasks yet.</p>';
             return;
         }
 
-        container.innerHTML = tasks.map(({ id, title, status, priority }) => `
-            <div class="recent-task">
-                <span class="recent-task__title">${title}</span>
-                <span class="badge badge--${status}">${status}</span>
-                <span class="badge badge--${priority}">${priority}</span>
-            </div>
-        `).join('');
+        // Map each task to a preview row
+        // Destructuring inside arrow function parameter
+        container.innerHTML = tasks
+            .map(({ id, title, status, priority }) => `
+                <div class="recent-task">
+                    <span class="recent-task__title">${title}</span>
+                    <div style="display:flex; gap:0.5rem;">
+                        <span class="badge badge--${status.replace('_', '-')}">
+                            ${status.replace('_', ' ')}
+                        </span>
+                        <span class="badge badge--${priority}">
+                            ${priority}
+                        </span>
+                    </div>
+                </div>
+            `)
+            .join('');
 
     } catch (err) {
-        container.innerHTML = `<p class="error">Failed to load recent tasks: ${err.message}</p>`;
+        container.innerHTML = `
+            <p class="error">Failed to load recent tasks: ${err.message}</p>
+        `;
     }
 };
 
@@ -54,7 +75,7 @@ const loadRecentTasks = async () => {
 // Init
 // ============================================================
 const init = () => {
-    loadStats();
+    loadDashboardStats();
     loadRecentTasks();
 };
 

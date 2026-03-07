@@ -3,11 +3,11 @@
 const BASE_URL = 'http://localhost:8000/api';
 
 // ============================================================
-// Custom Error Class — ES6 class inheritance
+// Custom Error Class
 // ============================================================
 class ApiError extends Error {
     constructor(message, status) {
-        super(message);           // call parent constructor
+        super(message);
         this.name   = 'ApiError';
         this.status = status;
     }
@@ -15,20 +15,14 @@ class ApiError extends Error {
 
 // ============================================================
 // Base Request Handler
-// async/await, destructuring, arrow functions
 // ============================================================
 const request = async (endpoint, options = {}) => {
     const url = `${BASE_URL}${endpoint}`;
 
-    const defaultHeaders = {
-        'Content-Type': 'application/json',
-    };
-
-    // Spread — merge default headers with any custom ones
     const config = {
         ...options,
         headers: {
-            ...defaultHeaders,
+            'Content-Type': 'application/json',
             ...options.headers,
         },
     };
@@ -43,22 +37,46 @@ const request = async (endpoint, options = {}) => {
         );
     }
 
-    // 204 No Content — return null
     if (response.status === 204) return null;
 
     return response.json();
 };
 
 // ============================================================
-// Task API Methods — ES6 class with static methods
+// Query String Builder
+// Filters out empty, null, undefined values
+// ============================================================
+const buildQueryString = (params = {}) => {
+    const filtered = Object.entries(params)
+        .filter(([, value]) => value !== '' && value !== null && value !== undefined)
+        .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`);
+
+    return filtered.length > 0 ? `?${filtered.join('&')}` : '';
+};
+
+// ============================================================
+// Task API
 // ============================================================
 export class TaskAPI {
 
-    // GET /api/tasks?status=&priority=&search=&sort=&page=&limit=
-    static async getAll(filters = {}) {
-        const { buildQueryString } = await import('./utils.js');
-        const query = buildQueryString(filters);
+    // GET /api/tasks
+    // Supports: page, limit, status, priority, search, sort
+    static async getAll({
+        page     = 1,
+        limit    = 10,
+        status   = '',
+        priority = '',
+        search   = '',
+        sort     = 'created_at_desc',
+    } = {}) {
+        const query = buildQueryString({ page, limit, status, priority, search, sort });
         return request(`/tasks${query}`);
+    }
+
+    // GET /api/tasks/stats
+    // Returns: total, pending, in_progress, completed, high_priority, overdue
+    static async getStats() {
+        return request('/tasks/stats');
     }
 
     // GET /api/tasks/:id
@@ -88,19 +106,12 @@ export class TaskAPI {
             method: 'DELETE',
         });
     }
-
-    // GET /api/tasks/stats
-    static async getStats() {
-        return request('/tasks/stats');
-    }
 }
 
 // ============================================================
-// History API Methods
+// History API
 // ============================================================
 export class HistoryAPI {
-
-    // GET /api/history?task_id=
     static async getAll(taskId = null) {
         const query = taskId ? `?task_id=${taskId}` : '';
         return request(`/history${query}`);
