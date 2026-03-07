@@ -3,96 +3,208 @@
 ## Purpose
 
 TaskFlow is a task management system for small teams or individuals.
-It allows users to create and manage tasks, track progress by status,
-and view summary statistics on a dashboard.
-
-The goal is to demonstrate a clean, layered full-stack architecture
-with separation of concerns at every level.
+Users can create tasks, track progress by status, search and filter,
+and view aggregated statistics on a dashboard.
 
 ---
 
 ## System Layers
 ```
-[ Browser ]
-    │  HTTP requests (fetch API)
-    ▼
-[ FastAPI Backend — Python ]
-    │  SQLAlchemy ORM queries
-    ▼
-[ PostgreSQL Database ]
+[ Browser — Vanilla JS ES6+ ]
+         │
+         │  HTTP fetch() — JSON
+         ▼
+[ FastAPI Backend — Python 3.11 ]
+         │
+         │  SQLAlchemy ORM
+         ▼
+[ PostgreSQL 15 — Docker container ]
+```
+
+---
+
+## Request Flow — Create Task
+```
+1. User fills form on tasks.html
+2. tasks.js handleFormSubmit() validates input via utils.js
+3. TaskAPI.create() in api.js sends POST /api/tasks
+4. FastAPI route in routes/tasks.py receives request
+5. Pydantic schema in schemas.py validates the request body
+6. crud.py runs INSERT via SQLAlchemy ORM
+7. db.py session commits to PostgreSQL
+8. PostgreSQL triggers updated_at via procedure
+9. Response returns created task as JSON
+10. ui.js renderTaskCard() adds the card to the DOM
+```
+
+---
+
+## Request Flow — Load Tasks with Filters
+```
+1. User changes filter dropdown or types in search box
+2. tasks.js filterTasks() updates page state object
+3. TaskAPI.getAll() builds query string via buildQueryString()
+4. GET /api/tasks?status=pending&priority=high&search=api&sort=created_at_desc&page=1&limit=10
+5. FastAPI route applies WHERE clauses, ORDER BY, LIMIT/OFFSET
+6. Returns { tasks: [...], total: 12, page: 1, total_pages: 2 }
+7. renderTaskList() renders task cards
+8. renderPagination() renders page buttons
 ```
 
 ---
 
 ## Frontend Pages
 
-| Page             | File                    | Purpose                                      |
-|------------------|-------------------------|----------------------------------------------|
-| Home / Landing   | `frontend/index.html`   | App entry point, navigation                  |
-| Task Manager     | `frontend/tasks.html`   | Full CRUD interface, filter, search, sort     |
-| Dashboard        | `frontend/dashboard.html` | Statistics, charts, task summaries          |
+| Page         | File                  | JS Module       | Purpose                          |
+|--------------|-----------------------|-----------------|----------------------------------|
+| Dashboard    | `index.html`          | `dashboard.js`  | Stats overview, recent tasks     |
+| Task Manager | `tasks.html`          | `tasks.js`      | Full CRUD, filter, search, sort  |
 
 ---
 
-## Backend API Endpoints
+## Frontend JS Modules
 
-| Method | Route                    | Description                          |
-|--------|--------------------------|--------------------------------------|
-| GET    | `/api/tasks`             | List tasks — supports filter, sort, search, pagination |
-| POST   | `/api/tasks`             | Create a new task                    |
-| GET    | `/api/tasks/{id}`        | Get a single task by ID              |
-| PUT    | `/api/tasks/{id}`        | Update task fields                   |
-| DELETE | `/api/tasks/{id}`        | Delete a task                        |
-| GET    | `/api/tasks/stats`       | Aggregated dashboard statistics      |
-| GET    | `/api/history`           | Retrieve action history log          |
+| File          | Responsibility                                         |
+|---------------|--------------------------------------------------------|
+| `api.js`      | All HTTP calls — TaskAPI and HistoryAPI classes        |
+| `tasks.js`    | Task page state, form handling, filter, pagination     |
+| `dashboard.js`| Stats loading, recent tasks rendering                  |
+| `ui.js`       | Pure DOM rendering — cards, stats, pagination, errors  |
+| `utils.js`    | Formatting, validation, DOM helpers, query builder     |
+| `main.js`     | Shared init — active nav link                          |
 
 ---
 
-## Database Tables
+## API Endpoints
+
+### Tasks
+
+| Method | Endpoint           | Query Params                                      | Description                  |
+|--------|--------------------|---------------------------------------------------|------------------------------|
+| GET    | `/api/tasks`       | `page, limit, status, priority, search, sort`     | List tasks with filters      |
+| POST   | `/api/tasks`       | —                                                 | Create a new task            |
+| GET    | `/api/tasks/stats` | —                                                 | Dashboard aggregated stats   |
+| GET    | `/api/tasks/{id}`  | —                                                 | Get single task by ID        |
+| PUT    | `/api/tasks/{id}`  | —                                                 | Update task fields           |
+| DELETE | `/api/tasks/{id}`  | —                                                 | Delete a task                |
+
+### History
+
+| Method | Endpoint      | Query Params | Description              |
+|--------|---------------|--------------|--------------------------|
+| GET    | `/api/history`| `task_id`    | Get action history log   |
+
+---
+
+### GET `/api/tasks` — Query Parameters
+
+| Param      | Type   | Default          | Values                                              |
+|------------|--------|------------------|-----------------------------------------------------|
+| `page`     | int    | `1`              | Any positive integer                                |
+| `limit`    | int    | `10`             | `1–100`                                             |
+| `status`   | string | `''` (all)       | `pending`, `in_progress`, `completed`               |
+| `priority` | string | `''` (all)       | `low`, `medium`, `high`                             |
+| `search`   | string | `''` (none)      | Any keyword — searches title and description        |
+| `sort`     | string | `created_at_desc`| `created_at_desc`, `created_at_asc`, `due_date_asc`, `priority_desc` |
+
+---
+
+### GET `/api/tasks/stats` — Response
+```json
+{
+    "total_tasks":    12,
+    "pending":         8,
+    "in_progress":     2,
+    "completed":       2,
+    "high_priority":   5,
+    "overdue":         1
+}
+```
+
+---
+
+### POST `/api/tasks` — Request Body
+```json
+{
+    "title":       "Build FastAPI backend",
+    "description": "Create routes, models, schemas, CRUD",
+    "status":      "pending",
+    "priority":    "high",
+    "due_date":    "2025-01-15"
+}
+```
+
+### POST `/api/tasks` — Response
+```json
+{
+    "id":          3,
+    "title":       "Build FastAPI backend",
+    "description": "Create routes, models, schemas, CRUD",
+    "status":      "pending",
+    "priority":    "high",
+    "due_date":    "2025-01-15",
+    "created_at":  "2025-01-07T10:22:00",
+    "updated_at":  "2025-01-07T10:22:00"
+}
+```
+
+---
+
+## Database Schema
 
 ### `tasks`
-| Column       | Type        | Notes                                    |
-|--------------|-------------|------------------------------------------|
-| id           | SERIAL PK   | Auto-increment primary key               |
-| title        | VARCHAR(255)| Required, task name                      |
-| description  | TEXT        | Optional details                         |
-| status       | VARCHAR(50) | `todo`, `in_progress`, `done`            |
-| priority     | VARCHAR(50) | `low`, `medium`, `high`                  |
-| due_date     | DATE        | Optional deadline                        |
-| created_at   | TIMESTAMP   | Auto-set on insert                       |
-| updated_at   | TIMESTAMP   | Auto-updated on change                   |
+```sql
+CREATE TABLE tasks (
+    id          SERIAL PRIMARY KEY,
+    title       VARCHAR(150)  NOT NULL,
+    description TEXT,
+    status      VARCHAR(20)   NOT NULL DEFAULT 'pending',
+    priority    VARCHAR(20)   NOT NULL DEFAULT 'medium',
+    due_date    DATE,
+    created_at  TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT chk_status
+        CHECK (status IN ('pending', 'in_progress', 'completed')),
+    CONSTRAINT chk_priority
+        CHECK (priority IN ('low', 'medium', 'high')),
+    CONSTRAINT chk_title_length
+        CHECK (LENGTH(TRIM(title)) > 0)
+);
+```
 
 ### `task_history`
-| Column       | Type        | Notes                                    |
-|--------------|-------------|------------------------------------------|
-| id           | SERIAL PK   | Auto-increment                           |
-| task_id      | INT FK      | References `tasks.id`                    |
-| action       | VARCHAR(50) | `created`, `updated`, `deleted`          |
-| changed_by   | VARCHAR(100)| Username or system label                 |
-| changed_at   | TIMESTAMP   | Auto-set on insert                       |
-| snapshot     | JSONB       | State of task at time of action          |
+```sql
+CREATE TABLE task_history (
+    id         SERIAL PRIMARY KEY,
+    task_id    INT          NOT NULL,
+    action     VARCHAR(20)  NOT NULL,
+    changed_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    snapshot   JSONB,
 
----
-
-## Request Flow Example — Create Task
+    CONSTRAINT chk_action
+        CHECK (action IN ('created', 'updated', 'deleted')),
+    CONSTRAINT fk_task
+        FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
+);
 ```
-1. User fills form on tasks.html
-2. tasks.js calls api.js → POST /api/tasks
-3. FastAPI route in routes/tasks.py receives request
-4. Pydantic schema in schemas.py validates the body
-5. crud.py runs INSERT via SQLAlchemy
-6. db.py session commits to PostgreSQL
-7. Response returns new task object as JSON
-8. ui.js renders new task card in the DOM
+
+### Indexes
+```sql
+CREATE INDEX idx_tasks_status     ON tasks(status);
+CREATE INDEX idx_tasks_priority   ON tasks(priority);
+CREATE INDEX idx_tasks_created_at ON tasks(created_at DESC);
+CREATE INDEX idx_history_task_id  ON task_history(task_id);
 ```
 
 ---
 
 ## Future Improvements
 
-- User authentication with JWT tokens
-- Multi-user support with task assignment
+- JWT authentication and multi-user support
+- Task assignment to users
 - File attachments per task
 - Email notifications on due date
-- Export tasks to CSV
-- Dark mode toggle
+- CSV export
+- Dark / light mode toggle
+- Unit tests with pytest and Jest
