@@ -1,13 +1,13 @@
 # backend/app/schemas.py
 
 from pydantic import BaseModel, Field, field_validator
-from typing   import Optional, List
+from typing import Optional, List
 from datetime import date, datetime
 
 # ============================================================
 # Allowed values
 # ============================================================
-VALID_STATUSES  = {"pending", "in_progress", "completed"}
+VALID_STATUSES = {"pending", "in_progress", "completed"}
 VALID_PRIORITIES = {"low", "medium", "high"}
 VALID_SORTS = {
     "created_at_desc",
@@ -20,12 +20,13 @@ VALID_SORTS = {
 # Task Schemas
 # ============================================================
 
+
 class TaskBase(BaseModel):
-    title:       str            = Field(..., min_length=1, max_length=150)
+    title: str = Field(..., min_length=1, max_length=150)
     description: Optional[str] = Field(None)
-    status:      str            = Field("pending")
-    priority:    str            = Field("medium")
-    due_date:    Optional[date] = Field(None)
+    status: str = Field("pending")
+    priority: str = Field("medium")
+    due_date: Optional[date] = Field(None)
 
     @field_validator("status")
     @classmethod
@@ -57,11 +58,11 @@ class TaskCreate(TaskBase):
 # Used for PUT /api/tasks/{id}
 # All fields optional on update
 class TaskUpdate(BaseModel):
-    title:       Optional[str]  = Field(None, min_length=1, max_length=150)
-    description: Optional[str]  = None
-    status:      Optional[str]  = None
-    priority:    Optional[str]  = None
-    due_date:    Optional[date] = None
+    title: Optional[str] = Field(None, min_length=1, max_length=150)
+    description: Optional[str] = None
+    status: Optional[str] = None
+    priority: Optional[str] = None
+    due_date: Optional[date] = None
 
     @field_validator("status")
     @classmethod
@@ -80,7 +81,7 @@ class TaskUpdate(BaseModel):
 
 # Used for all responses — includes DB fields
 class TaskResponse(TaskBase):
-    id:         int
+    id: int
     created_at: datetime
     updated_at: datetime
 
@@ -91,9 +92,9 @@ class TaskResponse(TaskBase):
 # Paginated task list response
 # ============================================================
 class TaskListResponse(BaseModel):
-    tasks:       List[TaskResponse]
-    total:       int
-    page:        int
+    tasks: List[TaskResponse]
+    total: int
+    page: int
     total_pages: int
 
 
@@ -101,22 +102,22 @@ class TaskListResponse(BaseModel):
 # Dashboard statistics response
 # ============================================================
 class TaskStatsResponse(BaseModel):
-    total_tasks:   int
-    pending:       int
-    in_progress:   int
-    completed:     int
+    total_tasks: int
+    pending: int
+    in_progress: int
+    completed: int
     high_priority: int
-    overdue:       int
+    overdue: int
 
 
 # ============================================================
 # History Schemas
 # ============================================================
 class HistoryResponse(BaseModel):
-    id:         int
-    task_id:    int
-    action:     str
+    id: int
+    task_id: int
+    action: str
     changed_at: datetime
-    snapshot:   Optional[dict] = None
+    snapshot: Optional[dict] = None
 
     model_config = {"from_attributes": True}

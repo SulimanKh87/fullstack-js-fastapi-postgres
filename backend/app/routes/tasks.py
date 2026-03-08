@@ -1,17 +1,22 @@
 # backend/app/routes/tasks.py
 
-from fastapi           import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm    import Session
-from typing            import Optional
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import Session
+from typing import Optional
 
-from ..db      import get_db
+from ..db import get_db
 from ..schemas import (
-    TaskCreate, TaskUpdate, TaskResponse,
-    TaskListResponse, TaskStatsResponse, HistoryResponse,
+    TaskCreate,
+    TaskUpdate,
+    TaskResponse,
+    TaskListResponse,
+    TaskStatsResponse,
+    HistoryResponse,
 )
 from .. import crud
 
 router = APIRouter(prefix="/api", tags=["tasks"])
+
 
 # ============================================================
 # GET /api/tasks/stats
@@ -28,21 +33,21 @@ def get_stats(db: Session = Depends(get_db)):
 # ============================================================
 @router.get("/tasks", response_model=TaskListResponse)
 def list_tasks(
-    page:     int            = Query(1,    ge=1),
-    limit:    int            = Query(10,   ge=1, le=100),
-    status:   Optional[str] = Query(None),
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1, le=100),
+    status: Optional[str] = Query(None),
     priority: Optional[str] = Query(None),
-    search:   Optional[str] = Query(None),
-    sort:     str            = Query("created_at_desc"),
-    db:       Session        = Depends(get_db),
+    search: Optional[str] = Query(None),
+    sort: str = Query("created_at_desc"),
+    db: Session = Depends(get_db),
 ):
     tasks, total, total_pages = crud.get_tasks(
         db, page, limit, status, priority, search, sort
     )
     return {
-        "tasks":       tasks,
-        "total":       total,
-        "page":        page,
+        "tasks": tasks,
+        "total": total,
+        "page": page,
         "total_pages": total_pages,
     }
 
@@ -93,6 +98,6 @@ def delete_task(task_id: int, db: Session = Depends(get_db)):
 @router.get("/history", response_model=list[HistoryResponse])
 def get_history(
     task_id: Optional[int] = Query(None),
-    db:      Session        = Depends(get_db),
+    db: Session = Depends(get_db),
 ):
     return crud.get_history(db, task_id)

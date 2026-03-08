@@ -41,7 +41,8 @@ def _log_history(db: Session, task: Task, action: str):
 SORT_MAP = {
     "created_at_desc": Task.created_at.desc(),
     "created_at_asc": Task.created_at.asc(),
-    "due_date_asc": Task.due_date.asc().nulls_last(),
+    "due_date_asc": Task.due_date.asc().nullslast(),
+    "due_date_desc": Task.due_date.desc().nullslast(),
     "priority_desc": case(
         {"high": 1, "medium": 2, "low": 3}, value=Task.priority
     ).asc(),
