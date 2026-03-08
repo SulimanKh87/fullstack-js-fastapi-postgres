@@ -8,7 +8,7 @@ Built as a full-stack portfolio project demonstrating real engineering practices
 | Layer     | Technology                      |
 |-----------|---------------------------------|
 | Frontend  | Vanilla JS ES6+, HTML5, CSS3    |
-| Backend   | Python 3.11, FastAPI            |
+| Backend   | Python 3.13, FastAPI            |
 | Database  | PostgreSQL 15                   |
 | ORM       | SQLAlchemy 2.x                  |
 | Container | Docker + Docker Compose         |
@@ -74,7 +74,7 @@ docker compose up -d
 cd backend
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
+uvicorn app.main:app --reload --port 8001
 
 # 3. Open frontend
 # Open frontend/index.html with VS Code Live Server
@@ -129,6 +129,6 @@ docs(project): add architecture and API documentation
 ✅ Milestone 4 — Frontend HTML and CSS  
 ✅ Milestone 5 — Advanced JS: pagination, search, sort, stats  
 ✅ Milestone 6 — Professional practices and documentation  
-⏳ Milestone 7 — FastAPI backend: models, schemas, CRUD  
-⏳ Milestone 8 — API routes and integration  
+✅ Milestone 7 — FastAPI backend: models, schemas, CRUD, routes  
+✅ Milestone 8 — API routes and integration and manual testing  
 ⏳ Milestone 9 — End to end testing
